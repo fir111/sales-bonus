@@ -100,7 +100,7 @@ function analyzeSalesData(data, options) {
         throw new Error('data must be not empty object'); }
 
     const checkData = (items) => {
-        if ( !Array.isArray(items) || items == null) {
+        if ( !Array.isArray(items) || items.length === 0) {
             throw new Error(`${items} must be not array`);
         }
     }
