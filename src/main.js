@@ -126,26 +126,37 @@ function analyzeSalesData(data, options) {
             sales_count: 0,
             products: [] }));
 
+    const sellersMap = new Map();
+    for (const seller of transformedSellers) {
+        sellersMap.set(seller.id, seller);
+    }
+
     // @TODO: Индексация продавцов и товаров для быстрого доступа
     const groupedBySeller = data.purchase_records.reduce((acc, receipt) => {
         const sellerId = receipt.seller_id;
         if (!acc[sellerId]) {
-            acc[sellerId] = [];
-            acc[sellerId]['total_amount'] = 0;
-            acc[sellerId]['total_discount'] = 0;
-            acc[sellerId]['profit'] = 0;
-            acc[sellerId]['sales_count'] = 0;
+            acc[sellerId] = {
+                name: sellersMap.get(sellerId).name,
+                total_amount: 0,
+                revenue: 0,
+                total_discount: 0,
+                profit: 0,
+                sales_count: 0,
+                receipts: []
+            }
         }
-        acc[sellerId].push(receipt);
-        acc[sellerId]['total_amount'] += receipt.total_amount;
-        acc[sellerId]['total_discount'] += receipt.total_discount;
-        acc[sellerId]['profit'] += receipt.total_amount - receipt.total_discount;
-        acc[sellerId]['sales_count']++;
+        acc[sellerId].receipts.push(receipt);
+        acc[sellerId].total_amount += receipt.total_amount;
+        acc[sellerId].total_discount += receipt.total_discount;
+        acc[sellerId].profit += receipt.total_amount;
+        acc[sellerId].revenue += receipt.total_amount - receipt.total_discount;
+        acc[sellerId].sales_count++;
         return acc;
     }, {});
+
     // @TODO: Расчет выручки и прибыли для каждого продавца
     Object.entries(groupedBySeller).forEach(([key, value]) => {
-        const allItems = value.flatMap(receipt => receipt.items);
+        const allItems = value.receipts.flatMap(receipt => receipt.items);
         const groupedBySku = allItems.reduce((acc, item) => {
             if (!acc[item.sku]) {
                 acc[item.sku] = { ...item };
@@ -154,13 +165,12 @@ function analyzeSalesData(data, options) {
             }
             return acc;
         }, {});
-        const result = Object.values(groupedBySku);
-        value.grouped = []
-        value.grouped.push(result.sort((a, b) => b.quantity - a.quantity));
+        value.grouped_items = Object.values(groupedBySku);
+        value.grouped_items.sort((a, b) => b.quantity - a.quantity)
+        value.top_products = value.grouped_items.slice(0, 10)
     });
     //console.log(groupedBySeller, Array.isArray(groupedBySeller));
 
-    // @TODO: Сортировка продавцов по прибыли
 
     // @TODO: Назначение премий на основе ранжирования
     addedBonusesToSellers(groupedBySeller);
@@ -168,7 +178,28 @@ function analyzeSalesData(data, options) {
 
 
     // @TODO: Подготовка итоговой коллекции с нужными полями
+    const result = Object.entries(groupedBySeller).map((entry) => {
+        const [seller_id, seller] = entry;
+        return {
+            seller_id: seller_id,
+            name: seller.name,
+            revenue: seller.revenue,
+            profit: seller.profit,
+            sales_count: seller.sales_count,
+            top_products: seller.top_products.map(product => {
+                return {
+                    sku: product.sku,
+                    quantity: product.quantity,
+                }
+            }),
+            bonus: seller.bonus,
+        }
+    });
 
+    // @TODO: Сортировка продавцов по прибыли
+    result.sort((a, b) => b.revenue - a.revenue) ;
+
+    return result;
 
 //     [{
 //         seller_id: "seller_1", // Идентификатор продавца
@@ -179,7 +210,7 @@ function analyzeSalesData(data, options) {
 //         top_products: [{ // Топ-10 проданных товаров в штуках
 //             sku: "SKU_001", // Артикул товара
 //             quantity: 12: // Сколько продано
-// }],
-//     bonus: 1234 // Итоговый бонус в рублях, не процент
+//         }],
+//         bonus: 1234 // Итоговый бонус в рублях, не процент
 // }]
 }
