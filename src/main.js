@@ -174,7 +174,7 @@ function analyzeSalesData(data, options) {
 
     // @TODO: Назначение премий на основе ранжирования
     addedBonusesToSellers(groupedBySeller);
-    console.log(groupedBySeller, Array.isArray(groupedBySeller));
+    // console.log(groupedBySeller, Array.isArray(groupedBySeller));
 
 
     // @TODO: Подготовка итоговой коллекции с нужными полями
