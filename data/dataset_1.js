@@ -832,6 +832,9 @@ const data = {
                     "discount": 7.68,
                     "quantity": 1,
                     "sale_price": 919.07
+                    // "sku": "SKU_027",
+                    // "purchase_price": 869.53,
+                    // "sale_price": 879.54
                 },
                 {
                     "sku": "SKU_091",
