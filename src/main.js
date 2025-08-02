@@ -63,9 +63,9 @@ function calculateBonusByProfit(index, total, seller) {
     // @TODO: Расчет бонуса от позиции в рейтинге
     let percent;
     if (index === 0) percent = 0.15;
-    else if (index === 1) percent = 0.10;
-    else if (index >= 2 && index <= total-2) percent = 0.05;
-    else percent = 0;
+    else if (index === 1 || index == 2) percent = 0.10;
+    else if (index === total-1) percent = 0;
+    else percent = 0.05;
     return seller.profit * percent;
 }
 
