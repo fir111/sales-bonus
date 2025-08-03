@@ -148,8 +148,8 @@ function analyzeSalesData(data, options) {
         acc[sellerId].receipts.push(receipt);
         acc[sellerId].total_amount += receipt.total_amount;
         acc[sellerId].total_discount += receipt.total_discount;
-        acc[sellerId].profit += receipt.total_amount;
-        acc[sellerId].revenue += receipt.total_amount - receipt.total_discount;
+        acc[sellerId].profit += receipt.total_amount; //  - receipt.total_discount
+        acc[sellerId].revenue += receipt.total_amount;
         acc[sellerId].sales_count++;
         return acc;
     }, {});
@@ -183,8 +183,8 @@ function analyzeSalesData(data, options) {
         return {
             seller_id: seller_id,
             name: seller.name,
-            revenue: seller.revenue,
-            profit: seller.profit,
+            revenue: seller.revenue.toFixed(2),
+            profit: seller.profit.toFixed(2),
             sales_count: seller.sales_count,
             top_products: seller.top_products.map(product => {
                 return {
@@ -192,7 +192,7 @@ function analyzeSalesData(data, options) {
                     quantity: product.quantity,
                 }
             }),
-            bonus: seller.bonus,
+            bonus: seller.bonus.toFixed(2),
         }
     });
 
