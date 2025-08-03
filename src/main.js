@@ -194,7 +194,8 @@ function analyzeSalesData(data, options) {
         value.grouped_items = Object.values(groupedBySku);
         value.grouped_items.sort((a, b) => b.quantity - a.quantity);
 
-        value.revenue = allItems.reduce((acc, item) => acc + (1-item.discount/100)*item.sale_price * item.quantity, 0)
+        value.revenue = value.receipts.reduce((acc, item) => acc + item.total_amount, 0);
+        // allItems.reduce((acc, item) => acc + (1-item.discount/100)*item.sale_price * item.quantity, 0)
         value.profit =  allItems.reduce((acc, item) => acc + (
             1-item.discount/100)*item.sale_price * item.quantity - groupedProducts[item.sku][0].purchase_price * item.quantity,
             0)
