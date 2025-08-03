@@ -6,8 +6,13 @@
  */
 function calculateSimpleRevenue(purchase, _product) {
    // @TODO: Расчет выручки от операции
-    return purchase.sale_price * purchase.quantity * (1-purchase.discount / 100);
-       // -_product.purchase_price*purchase.quantity;
+   //  const cost = product.purchase_price * purchase.quantity;
+
+    const discount = 1 - (purchase.discount / 100);
+    return purchase.sale_price * purchase.quantity * discount;
+
+    // return purchase.sale_price * purchase.quantity * (1. - purchase.discount / 100.)
+    //     - product.purchase_price * purchase.quantity;
 }
 
 function calculateSellerProfit(purchase_records) {
@@ -116,6 +121,8 @@ function analyzeSalesData(data, options) {
 
     const { calculateRevenue, calculateBonus } = options;
 
+    const groupedProducts = groupBy(data.products, (product) => product.sku);
+
     // @TODO: Подготовка промежуточных данных для сбора статистики
     const transformedSellers = data.sellers.map(seller => ({
             ...seller,
@@ -142,15 +149,22 @@ function analyzeSalesData(data, options) {
                 total_discount: 0,
                 profit: 0,
                 sales_count: 0,
-                receipts: []
+                receipts: [],
+                total_cost: 0,
             }
         }
         acc[sellerId].receipts.push(receipt);
         acc[sellerId].total_amount += receipt.total_amount;
         acc[sellerId].total_discount += receipt.total_discount;
-        acc[sellerId].profit += receipt.total_amount; //  - receipt.total_discount
         acc[sellerId].revenue += receipt.total_amount;
         acc[sellerId].sales_count++;
+
+        const total_cost = receipt.items.reduce((acc, item) => {
+            return acc + groupedProducts[item.sku][0].purchase_price * item.quantity;
+        }, 0);
+
+        acc[sellerId].profit += receipt.total_amount - total_cost;
+
         return acc;
     }, {});
 
@@ -160,13 +174,31 @@ function analyzeSalesData(data, options) {
         const groupedBySku = allItems.reduce((acc, item) => {
             if (!acc[item.sku]) {
                 acc[item.sku] = { ...item };
+                acc[item.sku].item_revenue = 0
+                acc[item.sku].cost = 0;
             } else {
                 acc[item.sku].quantity += item.quantity;
             }
+
+            // acc[item.sku].item_profit +=
+            //     (acc[item.sku].sale_price - acc[item.sku].discount * acc[item.sku].sale_price / 100.) * item.quantity
+            //     - groupedProducts[item.sku][0].purchase_price * item.quantity;
+
+            const item_revenue = calculateSimpleRevenue(
+                acc[item.sku], groupedProducts[item.sku][0]
+            );
+            acc[item.sku].item_revenue += item_revenue;
+            acc[item.sku].cost += item.quantity*groupedProducts[item.sku][0].purchase_price;
             return acc;
         }, {});
         value.grouped_items = Object.values(groupedBySku);
-        value.grouped_items.sort((a, b) => b.quantity - a.quantity)
+        value.grouped_items.sort((a, b) => b.quantity - a.quantity);
+        // value.profit = value.grouped_items.reduce((acc,value) => {
+        //     return acc +value.item_revenue-value.cost
+        // }, 0);
+        // value.profit = value.grouped_items.reduce((acc, item) => {
+        //     return acc + (item.item_revenue - groupedProducts[item.sku][0].purchase_price * item.quantity);
+        // }, 0)
         value.top_products = value.grouped_items.slice(0, 10)
     });
     //console.log(groupedBySeller, Array.isArray(groupedBySeller));
@@ -183,8 +215,8 @@ function analyzeSalesData(data, options) {
         return {
             seller_id: seller_id,
             name: seller.name,
-            revenue: seller.revenue.toFixed(2),
-            profit: seller.profit.toFixed(2),
+            revenue: parseFloat(seller.revenue.toFixed(2)),
+            profit: parseFloat(seller.profit.toFixed(2)),
             sales_count: seller.sales_count,
             top_products: seller.top_products.map(product => {
                 return {
