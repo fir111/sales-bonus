@@ -237,7 +237,7 @@ function analyzeSalesData(data, options) {
     });
 
     // @TODO: Сортировка продавцов по прибыли
-    result.sort((a, b) => b.revenue - a.revenue) ;
+    result.sort((a, b) => b.profit - a.profit) ;
 
     return result;
 
