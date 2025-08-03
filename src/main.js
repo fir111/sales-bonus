@@ -193,6 +193,13 @@ function analyzeSalesData(data, options) {
         }, {});
         value.grouped_items = Object.values(groupedBySku);
         value.grouped_items.sort((a, b) => b.quantity - a.quantity);
+
+        value.revenue = allItems.reduce((acc, item) => acc + (1-item.discount/100)*item.sale_price * item.quantity, 0)
+        value.profit =  allItems.reduce((acc, item) => acc + (
+            1-item.discount/100)*item.sale_price * item.quantity - groupedProducts[item.sku][0].purchase_price * item.quantity,
+            0)
+
+
         // value.profit = value.grouped_items.reduce((acc,value) => {
         //     return acc +value.item_revenue-value.cost
         // }, 0);
@@ -224,7 +231,7 @@ function analyzeSalesData(data, options) {
                     quantity: product.quantity,
                 }
             }),
-            bonus: seller.bonus.toFixed(2),
+            bonus: parseFloat(seller.bonus.toFixed(2)),
         }
     });
 
